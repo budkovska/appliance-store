@@ -14,4 +14,9 @@ public class Client extends User {
 
     @NotBlank
     private String card;
+
+    public Client(Long id, String name, String email, String password, String card) {
+        super(id, name, email, password);
+        this.card = card;
+    }
 }
