@@ -12,11 +12,13 @@
 <body>
     <div th:insert="~{menunavy::navy}"></div>
     <h1 th:text="#{manufacturer.btn.new}"></h1>
-    <form action="#" th:action="@{add-manufacturer}" th:object="${manufacturer}" method="post">
+    <form th:action="@{/manufacturers/add-manufacturer}" th:object="${manufacturer}" method="post">
+        <input type="hidden" th:field="*{id}"/>
+        <p th:if="${#fields.hasErrors('name')}" class="text-danger" th:errors="*{name}"></p>
         <p><span th:text="#{object.manufacturer.name}"></span> <input type="text" th:field="*{name}"/></p>
         <div class="btn-group">
-            <button type="submit" class="btn btn-primary">Create</button>
-            <input type="reset" class="btn btn-secondary" value="Reset"/>
+            <button type="submit" class="btn btn-primary" th:text="#{btn.submit}"></button>
+            <input type="reset" class="btn btn-secondary" th:value="#{btn.reset}"/>
         </div>
     </form>
     <div th:insert="~{footer::footer}"></div>

@@ -14,6 +14,9 @@
 <body>
 <div th:insert="~{menunavy::navy}"></div>
 <h1 th:text="#{client.header.list}"></h1>
+
+<div class="alert alert-danger" th:if="${deleteError}" th:text="#{error.delete.related}"></div>
+
 <table class="table table-hover">
     <thead>
     <tr class="table-dark">
@@ -34,16 +37,18 @@
         <td th:text="${client.card}"/>
         <td>
             <div>
-                <a th:href="@{clients/}+${client.id}+@{/delete}">
-                    <span class="icon">
-                          <i class="fa fa-minus"></i>
-                    </span>
-                </a>
+                <form method="post" th:action="@{/clients/{id}/delete(id=${client.id})}" style="display:inline;">
+                    <button type="submit" class="btn btn-link p-0 text-danger" style="text-decoration: none;">
+                        <span class="icon">
+                            <i class="fa fa-minus"></i>
+                        </span>
+                    </button>
+                </form>
             </div>
         </td>
     </tr>
 
-</tbody>
+    </tbody>
 </table>
 <a th:href="@{clients/add}" class="btn btn-primary" th:text="#{client.btn.new}">New client</a>
 <div th:insert="~{footer::footer}"></div>

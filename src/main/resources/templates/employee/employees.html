@@ -14,6 +14,10 @@
 <body>
 <div th:insert="~{menunavy::navy}"></div>
 <h1 th:text="#{employee.header.list}"></h1>
+
+<div class="alert alert-danger" th:if="${selfDeleteError}" th:text="#{error.self.delete}"></div>
+<div class="alert alert-danger" th:if="${deleteError}" th:text="#{error.delete.related}"></div>
+
 <table class="table table-hover">
     <thead>
     <tr class="table-dark">
@@ -22,26 +26,29 @@
         <th th:text="#{object.user.email}"></th>
         <th th:text="#{object.user.password}"></th>
         <th th:text="#{object.employee.department}"></th>
-        <th >Operation</th>
+        <th>Operation</th>
     </tr>
     </thead>
     <tbody>
-        <tr th:each="employee: ${employees}">
-            <td th:text="${employee.id}"/>
-            <td th:text="${employee.name}"/>
-            <td th:text="${employee.email}"/>
-            <td th:text="${employee.password}"/>
-            <td th:text="${employee.department}"/>
-            <td>
-                <div>
-                    <a th:href="@{employees/}+${employee.id}+@{/delete}">
-                    <span class="icon">
-                          <i class="fa fa-minus"></i>
-                    </span>
-                    </a>
-                </div>
-            </td>
-        </tr>
+    <tr th:each="employee: ${employees}">
+        <td th:text="${employee.id}"/>
+        <td th:text="${employee.name}"/>
+        <td th:text="${employee.email}"/>
+        <td th:text="${employee.password}"/>
+        <td th:text="${employee.department}"/>
+        <td>
+            <div>
+                <form method="post" th:action="@{/employees/{id}/delete(id=${employee.id})}"
+                      style="display:inline;">
+                    <button type="submit" class="btn btn-link p-0 text-danger">
+                        <span class="icon">
+                            <i class="fa fa-minus"></i>
+                        </span>
+                    </button>
+                </form>
+            </div>
+        </td>
+    </tr>
 
     </tbody>
 </table>

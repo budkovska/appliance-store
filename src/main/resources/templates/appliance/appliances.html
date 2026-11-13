@@ -1,13 +1,11 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
-    <!-- Latest compiled and minified CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Latest compiled JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <title>Title</title>
+    <title>Appliances</title>
 </head>
 <body>
 <header>
@@ -15,6 +13,9 @@
 </header>
 <main>
     <h1 th:text="#{appliance.header.list}">Appliances list</h1>
+
+    <div class="alert alert-danger" th:if="${deleteError}" th:text="#{error.in.use}"></div>
+
     <table class="table table-hover">
         <thead>
         <tr class="table-dark">
@@ -27,26 +28,36 @@
             <th th:text="#{object.appliance.characteristic}"></th>
             <th th:text="#{object.appliance.description}"></th>
             <th th:text="#{object.appliance.power}"></th>
-            <th>Price</th>
+            <th th:text="#{object.appliance.price}"></th>
+            <th sec:authorize="hasRole('EMPLOYEE')" th:text="#{operation}"></th>
         </tr>
         </thead>
         <tbody>
         <tr th:each="appliance: ${appliances}">
-            <td><span class="float-end" th:text="${appliance.id}"/></td>
-            <td th:text="${appliance.name}"/>
-            <td><span class="float-end" th:text="${appliance.category}"/></td>
-            <td th:text="${appliance.model}"/>
-            <td><span class="float-end" th:text="${appliance.manufacturer.getName()}"/></td>
-            <td th:text="${appliance.powerType}"/>
-            <td th:text="${appliance.characteristic}"/>
-            <td th:text="${appliance.description}"/>
-            <td><span class="float-end" th:text="${appliance.power}"/></td>
-            <td><span class="float-end" th:text="${appliance.price}"/></td>
+            <td><span class="float-end" th:text="${appliance.id}"></span></td>
+            <td th:text="${appliance.name}"></td>
+            <td><span class="float-end" th:text="${appliance.category}"></span></td>
+            <td th:text="${appliance.model}"></td>
+            <td><span class="float-end" th:text="${appliance.manufacturer.name}"></span></td>
+            <td th:text="${appliance.powerType}"></td>
+            <td th:text="${appliance.characteristic}"></td>
+            <td th:text="${appliance.description}"></td>
+            <td><span class="float-end" th:text="${appliance.power}"></span></td>
+            <td><span class="float-end" th:text="${appliance.price}"></span></td>
+            <td sec:authorize="hasRole('EMPLOYEE')">
+                <a class="btn btn-sm btn-outline-primary"
+                   th:href="@{/appliances/{id}/edit(id=${appliance.id})}" th:text="#{btn.edit}"></a>
+                <form class="d-inline" method="post"
+                      th:action="@{/appliances/{id}/delete(id=${appliance.id})}">
+                    <button class="btn btn-sm btn-outline-danger" th:text="#{btn.delete}"></button>
+                </form>
+            </td>
         </tr>
-
         </tbody>
     </table>
-    <a th:href="@{appliances/add}" class="btn btn-primary" th:text="#{appliance.btn.new}">New appliance</a>
+
+    <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/appliances/add}"
+       class="btn btn-primary" th:text="#{appliance.btn.new}">New appliance</a>
 </main>
 <div th:insert="~{footer::footer}"></div>
 </body>
