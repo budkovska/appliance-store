@@ -1,53 +1,78 @@
 package com.epam.rd.autocode.assessment.appliances.service.impl;
 
 import com.epam.rd.autocode.assessment.appliances.aspect.Loggable;
+import com.epam.rd.autocode.assessment.appliances.dto.ClientDto;
 import com.epam.rd.autocode.assessment.appliances.model.Client;
 import com.epam.rd.autocode.assessment.appliances.repository.ClientRepository;
 import com.epam.rd.autocode.assessment.appliances.service.ClientService;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class ClientServiceImpl implements ClientService {
 
     private final ClientRepository repository;
+    private final ModelMapper modelMapper;
     private final PasswordEncoder passwordEncoder;
 
     @Override
-    public Page<Client> findAll(Pageable pageable) {
-        return repository.findAll(pageable);
+    @Transactional(readOnly = true)
+    public Page<ClientDto> findAll(Pageable pageable) {
+        return repository.findAll(pageable).map(this::toDto);
     }
 
     @Override
-    public List<Client> findAll() {
-        return repository.findAll();
+    @Transactional(readOnly = true)
+    public List<ClientDto> findAll() {
+        return repository.findAll().stream().map(this::toDto).toList();
     }
 
     @Override
-    public Client findById(Long id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Client not found: " + id));
+    @Transactional(readOnly = true)
+    public ClientDto findById(Long id) {
+        return toDto(find(id));
     }
 
     @Loggable
     @Override
-    public Client save(Client client) {
-        if (client.getPassword() != null && !client.getPassword().startsWith("$2")) {
-            client.setPassword(passwordEncoder.encode(client.getPassword()));
-        }
-        return repository.save(client);
+    public ClientDto save(ClientDto dto) {
+        Client entity = dto.getId() == null ? new Client() : find(dto.getId());
+        String currentHash = entity.getPassword();
+
+        modelMapper.map(dto, entity);
+
+        entity.setPassword(StringUtils.hasText(dto.getPassword())
+                ? passwordEncoder.encode(dto.getPassword())
+                : currentHash);
+        return toDto(repository.save(entity));
     }
 
     @Loggable
     @Override
     public void delete(Long id) {
         repository.deleteById(id);
+        repository.flush();
+    }
+
+    private Client find(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Client not found: " + id));
+    }
+
+    private ClientDto toDto(Client client) {
+        ClientDto dto = modelMapper.map(client, ClientDto.class);
+        dto.setPassword(null);
+        return dto;
     }
 }

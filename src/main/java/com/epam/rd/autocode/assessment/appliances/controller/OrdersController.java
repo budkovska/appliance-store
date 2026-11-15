@@ -1,7 +1,6 @@
 package com.epam.rd.autocode.assessment.appliances.controller;
 
-import com.epam.rd.autocode.assessment.appliances.model.OrderRow;
-import com.epam.rd.autocode.assessment.appliances.model.Orders;
+import com.epam.rd.autocode.assessment.appliances.dto.OrderDto;
 import com.epam.rd.autocode.assessment.appliances.service.ApplianceService;
 import com.epam.rd.autocode.assessment.appliances.service.ClientService;
 import com.epam.rd.autocode.assessment.appliances.service.OrderService;
@@ -13,10 +12,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import java.util.Comparator;
-import java.util.List;
 
 @Controller
 @RequestMapping("/orders")
@@ -30,7 +25,7 @@ public class OrdersController {
     @GetMapping
     public String list(@PageableDefault(size = 10, sort = "id") Pageable pageable,
                        Authentication auth, Model model) {
-        Page<Orders> page = orderService.findAllFor(auth.getName(), isEmployee(auth), pageable);
+        Page<OrderDto> page = orderService.findAllFor(auth.getName(), isEmployee(auth), pageable);
         model.addAttribute("orders", page.getContent());
         model.addAttribute("page", page);
         return "order/orders";
@@ -46,25 +41,20 @@ public class OrdersController {
 
     @PostMapping("/add-order")
     public String create(@RequestParam(required = false) Long clientId, Authentication auth) {
-        Orders order = orderService.create(auth.getName(), isEmployee(auth), clientId);
+        OrderDto order = orderService.create(auth.getName(), isEmployee(auth), clientId);
         return redirectToEdit(order.getId());
     }
 
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable Long id, Authentication auth, Model model) {
-        Orders order = orderService.findById(id, auth.getName(), isEmployee(auth));
-        List<OrderRow> rows = order.getOrderRowSet().stream()
-                .sorted(Comparator.comparing(OrderRow::getId))
-                .toList();
-        model.addAttribute("order", order);
-        model.addAttribute("rows", rows);
+        model.addAttribute("order", orderService.findById(id, auth.getName(), isEmployee(auth)));
         return "order/editOrder";
     }
 
     @GetMapping("/{id}/choice-appliance")
     public String choiceAppliance(@PathVariable Long id, Authentication auth, Model model) {
-        Orders order = orderService.findById(id, auth.getName(), isEmployee(auth));
-        if (Boolean.TRUE.equals(order.getApproved())) {
+        OrderDto order = orderService.findById(id, auth.getName(), isEmployee(auth));
+        if (order.isApproved()) {
             return redirectToEdit(id);
         }
         model.addAttribute("ordersId", id);
@@ -76,25 +66,23 @@ public class OrdersController {
     public String addIntoOrder(@PathVariable Long id,
                                @RequestParam Long applianceId,
                                @RequestParam Long numbers,
-                               Authentication auth,
-                               RedirectAttributes redirect) {
+                               Authentication auth) {
         try {
             orderService.addRow(id, applianceId, numbers, auth.getName(), isEmployee(auth));
         } catch (IllegalArgumentException e) {
-            redirect.addFlashAttribute("numberError", true);
+            return redirectToEdit(id) + "?numberError";
         } catch (IllegalStateException e) {
-            redirect.addFlashAttribute("lockedError", true);
+            return redirectToEdit(id) + "?lockedError";
         }
         return redirectToEdit(id);
     }
 
     @GetMapping("/{id}/rows/{rowId}/delete")
-    public String removeRow(@PathVariable Long id, @PathVariable Long rowId,
-                            Authentication auth, RedirectAttributes redirect) {
+    public String removeRow(@PathVariable Long id, @PathVariable Long rowId, Authentication auth) {
         try {
             orderService.removeRow(id, rowId, auth.getName(), isEmployee(auth));
         } catch (IllegalStateException e) {
-            redirect.addFlashAttribute("lockedError", true);
+            return redirectToEdit(id) + "?lockedError";
         }
         return redirectToEdit(id);
     }

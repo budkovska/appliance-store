@@ -29,8 +29,8 @@
         <tbody>
         <tr th:each="order: ${orders}">
             <td><span class="float-end" th:text="${order.id}"></span></td>
-            <td><span class="float-end" th:text="${order.client.name}"></span></td>
-            <td><span class="float-end" th:text="${order.employee?.name}"></span></td>
+            <td><span class="float-end" th:text="${order.clientName}"></span></td>
+            <td><span class="float-end" th:text="${order.employeeName}"></span></td>
             <td>
                 <div sec:authorize="hasRole('EMPLOYEE')">
                     <a th:if="${order.approved}"
@@ -48,7 +48,7 @@
                 </div>
             </td>
             <td><span class="float-end"
-                      th:text="${#aggregates.sum(order.orderRowSet.![amount]) ?: 0}"></span></td>
+                      th:text="${order.total}"></span></td>
             <td>
                 <div>
                     <a th:href="@{/orders/{id}/delete(id=${order.id})}">

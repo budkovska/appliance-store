@@ -14,7 +14,7 @@
 <main>
     <h1 th:text="#{appliance.header.list}">Appliances list</h1>
 
-    <div class="alert alert-danger" th:if="${deleteError}" th:text="#{error.in.use}"></div>
+    <div class="alert alert-danger" th:if="${param.deleteError}" th:text="#{error.in.use}"></div>
 
     <table class="table table-hover">
         <thead>
@@ -38,7 +38,7 @@
             <td th:text="${appliance.name}"></td>
             <td><span class="float-end" th:text="${appliance.category}"></span></td>
             <td th:text="${appliance.model}"></td>
-            <td><span class="float-end" th:text="${appliance.manufacturer.name}"></span></td>
+            <td><span class="float-end" th:text="${appliance.manufacturerName}"></span></td>
             <td th:text="${appliance.powerType}"></td>
             <td th:text="${appliance.characteristic}"></td>
             <td th:text="${appliance.description}"></td>

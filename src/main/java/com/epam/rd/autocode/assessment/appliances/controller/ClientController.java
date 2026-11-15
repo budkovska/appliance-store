@@ -1,6 +1,6 @@
 package com.epam.rd.autocode.assessment.appliances.controller;
 
-import com.epam.rd.autocode.assessment.appliances.model.Client;
+import com.epam.rd.autocode.assessment.appliances.dto.ClientDto;
 import com.epam.rd.autocode.assessment.appliances.service.ClientService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -10,9 +10,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/clients")
@@ -23,7 +23,7 @@ public class ClientController {
 
     @GetMapping
     public String list(@PageableDefault(size = 10, sort = "id") Pageable pageable, Model model) {
-        Page<Client> page = service.findAll(pageable);
+        Page<ClientDto> page = service.findAll(pageable);
         model.addAttribute("clients", page.getContent());
         model.addAttribute("page", page);
         return "client/clients";
@@ -31,7 +31,7 @@ public class ClientController {
 
     @GetMapping("/add")
     public String addForm(Model model) {
-        model.addAttribute("client", new Client());
+        model.addAttribute("client", new ClientDto());
         return "client/newClient";
     }
 
@@ -42,8 +42,10 @@ public class ClientController {
     }
 
     @PostMapping("/add-client")
-    public String save(@Valid @ModelAttribute("client") Client client,
-                       BindingResult result) {
+    public String save(@Valid @ModelAttribute("client") ClientDto client, BindingResult result) {
+        if (client.getId() == null && !StringUtils.hasText(client.getPassword())) {
+            result.rejectValue("password", "validation.password.required", "Password is required");
+        }
         if (result.hasErrors()) {
             return "client/newClient";
         }
@@ -52,11 +54,11 @@ public class ClientController {
     }
 
     @PostMapping("/{id}/delete")
-    public String delete(@PathVariable Long id, RedirectAttributes redirect) {
+    public String delete(@PathVariable Long id) {
         try {
             service.delete(id);
         } catch (DataIntegrityViolationException e) {
-            redirect.addFlashAttribute("deleteError", true);
+            return "redirect:/clients?deleteError";
         }
         return "redirect:/clients";
     }

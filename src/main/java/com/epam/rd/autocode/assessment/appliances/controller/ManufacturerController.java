@@ -1,6 +1,6 @@
 package com.epam.rd.autocode.assessment.appliances.controller;
 
-import com.epam.rd.autocode.assessment.appliances.model.Manufacturer;
+import com.epam.rd.autocode.assessment.appliances.dto.ManufacturerDto;
 import com.epam.rd.autocode.assessment.appliances.service.ManufacturerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +12,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/manufacturers")
@@ -23,7 +22,7 @@ public class ManufacturerController {
 
     @GetMapping
     public String list(@PageableDefault(size = 10, sort = "id") Pageable pageable, Model model) {
-        Page<Manufacturer> page = service.findAll(pageable);
+        Page<ManufacturerDto> page = service.findAll(pageable);
         model.addAttribute("manufacturers", page.getContent());
         model.addAttribute("page", page);
         return "manufacture/manufacturers";
@@ -31,7 +30,7 @@ public class ManufacturerController {
 
     @GetMapping("/add")
     public String addForm(Model model) {
-        model.addAttribute("manufacturer", new Manufacturer());
+        model.addAttribute("manufacturer", new ManufacturerDto());
         return "manufacture/newManufacturer";
     }
 
@@ -42,7 +41,7 @@ public class ManufacturerController {
     }
 
     @PostMapping("/add-manufacturer")
-    public String save(@Valid @ModelAttribute("manufacturer") Manufacturer manufacturer,
+    public String save(@Valid @ModelAttribute("manufacturer") ManufacturerDto manufacturer,
                        BindingResult result) {
         if (result.hasErrors()) {
             return "manufacture/newManufacturer";
@@ -52,11 +51,11 @@ public class ManufacturerController {
     }
 
     @PostMapping("/{id}/delete")
-    public String delete(@PathVariable Long id, RedirectAttributes redirect) {
+    public String delete(@PathVariable Long id) {
         try {
             service.delete(id);
         } catch (DataIntegrityViolationException e) {
-            redirect.addFlashAttribute("deleteError", true);
+            return "redirect:/manufacturers?deleteError";
         }
         return "redirect:/manufacturers";
     }

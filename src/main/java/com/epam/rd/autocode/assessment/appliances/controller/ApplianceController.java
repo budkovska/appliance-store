@@ -1,8 +1,7 @@
 package com.epam.rd.autocode.assessment.appliances.controller;
 
-import com.epam.rd.autocode.assessment.appliances.model.Appliance;
+import com.epam.rd.autocode.assessment.appliances.dto.ApplianceDto;
 import com.epam.rd.autocode.assessment.appliances.model.Category;
-import com.epam.rd.autocode.assessment.appliances.model.Manufacturer;
 import com.epam.rd.autocode.assessment.appliances.model.PowerType;
 import com.epam.rd.autocode.assessment.appliances.service.ApplianceService;
 import com.epam.rd.autocode.assessment.appliances.service.ManufacturerService;
@@ -16,7 +15,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/appliances")
@@ -28,7 +26,7 @@ public class ApplianceController {
 
     @GetMapping
     public String list(@PageableDefault(size = 10, sort = "id") Pageable pageable, Model model) {
-        Page<Appliance> page = applianceService.findAll(pageable);
+        Page<ApplianceDto> page = applianceService.findAll(pageable);
         model.addAttribute("appliances", page.getContent());
         model.addAttribute("page", page);
         return "appliance/appliances";
@@ -36,9 +34,7 @@ public class ApplianceController {
 
     @GetMapping("/add")
     public String addForm(Model model) {
-        Appliance appliance = new Appliance();
-        appliance.setManufacturer(new Manufacturer());
-        model.addAttribute("appliance", appliance);
+        model.addAttribute("appliance", new ApplianceDto());
         fillFormData(model);
         return "appliance/newAppliance";
     }
@@ -51,7 +47,7 @@ public class ApplianceController {
     }
 
     @PostMapping("/add-appliance")
-    public String save(@Valid @ModelAttribute("appliance") Appliance appliance,
+    public String save(@Valid @ModelAttribute("appliance") ApplianceDto appliance,
                        BindingResult result, Model model) {
         if (result.hasErrors()) {
             fillFormData(model);
@@ -62,11 +58,11 @@ public class ApplianceController {
     }
 
     @PostMapping("/{id}/delete")
-    public String delete(@PathVariable Long id, RedirectAttributes redirect) {
+    public String delete(@PathVariable Long id) {
         try {
             applianceService.delete(id);
         } catch (DataIntegrityViolationException e) {
-            redirect.addFlashAttribute("deleteError", true);
+            return "redirect:/appliances?deleteError";
         }
         return "redirect:/appliances";
     }

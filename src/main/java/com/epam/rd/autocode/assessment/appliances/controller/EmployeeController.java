@@ -1,6 +1,6 @@
 package com.epam.rd.autocode.assessment.appliances.controller;
 
-import com.epam.rd.autocode.assessment.appliances.model.Employee;
+import com.epam.rd.autocode.assessment.appliances.dto.EmployeeDto;
 import com.epam.rd.autocode.assessment.appliances.service.EmployeeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -10,9 +10,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/employees")
@@ -23,7 +23,7 @@ public class EmployeeController {
 
     @GetMapping
     public String list(@PageableDefault(size = 10, sort = "id") Pageable pageable, Model model) {
-        Page<Employee> page = service.findAll(pageable);
+        Page<EmployeeDto> page = service.findAll(pageable);
         model.addAttribute("employees", page.getContent());
         model.addAttribute("page", page);
         return "employee/employees";
@@ -31,7 +31,7 @@ public class EmployeeController {
 
     @GetMapping("/add")
     public String addForm(Model model) {
-        model.addAttribute("employee", new Employee());
+        model.addAttribute("employee", new EmployeeDto());
         return "employee/newEmployee";
     }
 
@@ -42,8 +42,10 @@ public class EmployeeController {
     }
 
     @PostMapping("/add-employee")
-    public String save(@Valid @ModelAttribute("employee") Employee employee,
-                       BindingResult result) {
+    public String save(@Valid @ModelAttribute("employee") EmployeeDto employee, BindingResult result) {
+        if (employee.getId() == null && !StringUtils.hasText(employee.getPassword())) {
+            result.rejectValue("password", "validation.password.required", "Password is required");
+        }
         if (result.hasErrors()) {
             return "employee/newEmployee";
         }
@@ -52,13 +54,13 @@ public class EmployeeController {
     }
 
     @PostMapping("/{id}/delete")
-    public String delete(@PathVariable Long id, RedirectAttributes redirect) {
+    public String delete(@PathVariable Long id) {
         try {
             service.delete(id);
         } catch (IllegalStateException e) {
-            redirect.addFlashAttribute("selfDeleteError", true);
+            return "redirect:/employees?selfDeleteError";
         } catch (DataIntegrityViolationException e) {
-            redirect.addFlashAttribute("deleteError", true);
+            return "redirect:/employees?deleteError";
         }
         return "redirect:/employees";
     }
