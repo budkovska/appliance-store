@@ -7,6 +7,7 @@ import com.epam.rd.autocode.assessment.appliances.service.ClientService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.NoSuchElementException;
 public class ClientServiceImpl implements ClientService {
 
     private final ClientRepository repository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public Page<Client> findAll(Pageable pageable) {
@@ -37,6 +39,9 @@ public class ClientServiceImpl implements ClientService {
     @Loggable
     @Override
     public Client save(Client client) {
+        if (client.getPassword() != null && !client.getPassword().startsWith("$2")) {
+            client.setPassword(passwordEncoder.encode(client.getPassword()));
+        }
         return repository.save(client);
     }
 
