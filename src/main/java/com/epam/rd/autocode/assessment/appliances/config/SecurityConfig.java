@@ -1,6 +1,5 @@
 package com.epam.rd.autocode.assessment.appliances.config;
 
-import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -44,7 +43,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(PathRequest.toH2Console()).permitAll()
+                        .requestMatchers(antMatcher("/h2-console/**")).permitAll()
                         .requestMatchers(antMatcher("/"), antMatcher("/styles/**")).permitAll()
                         .requestMatchers(antMatcher("/clients/**"), antMatcher("/employees/**"),
                                 antMatcher("/manufacturers/**")).hasRole("EMPLOYEE")
@@ -56,7 +55,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
                 .formLogin(form -> form.defaultSuccessUrl("/", true).permitAll())
                 .logout(logout -> logout.logoutSuccessUrl("/"))
-                .csrf(csrf -> csrf.ignoringRequestMatchers(PathRequest.toH2Console()))
+                .csrf(csrf -> csrf.ignoringRequestMatchers(antMatcher("/h2-console/**")))
                 .headers(h -> h.frameOptions(f -> f.sameOrigin()));
         return http.build();
     }
