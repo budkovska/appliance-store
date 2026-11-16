@@ -13,7 +13,7 @@ import lombok.ToString;
 @ToString(callSuper = true)
 public class EmployeeDto extends UserDto {
 
-    @NotBlank
-    @Size(max = 100)
+    @NotBlank(message = "{validation.required}")
+    @Size(max = 100, message = "{validation.size.max}")
     private String department;
 }

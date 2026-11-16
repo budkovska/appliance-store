@@ -18,6 +18,8 @@
             <div class="alert alert-danger" th:if="${param.error}" th:text="#{login.error}"></div>
             <div class="alert alert-warning" th:if="${param.locked}" th:text="#{login.locked}"></div>
 
+            <div class="alert alert-success" th:if="${param.registered}" th:text="#{login.registered}"></div>
+
             <form th:action="@{/login}" method="post">
                 <div class="mb-3">
                     <label for="email" class="form-label" th:text="#{object.user.email}">Email</label>
@@ -29,6 +31,9 @@
                 </div>
                 <button type="submit" class="btn btn-primary w-100" th:text="#{login.submit}">Sign in</button>
             </form>
+            <p class="text-center mt-3 mb-0">
+                <a th:href="@{/register}" th:text="#{register.link}">No account yet? Register</a>
+            </p>
         </div>
     </div>
 </main>

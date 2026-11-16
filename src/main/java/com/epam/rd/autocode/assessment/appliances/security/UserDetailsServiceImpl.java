@@ -25,9 +25,9 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         log.debug("Loading user by email: {}", email);
-        return employees.findFirstByEmail(email)
+        return employees.findFirstByEmailIgnoreCase(email)
                 .map(e -> toDetails(e, Role.EMPLOYEE))
-                .or(() -> clients.findFirstByEmail(email)
+                .or(() -> clients.findFirstByEmailIgnoreCase(email)
                         .map(c -> toDetails(c, Role.CLIENT)))
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
     }

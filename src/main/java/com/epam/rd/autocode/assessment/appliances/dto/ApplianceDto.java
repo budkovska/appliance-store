@@ -22,39 +22,39 @@ public class ApplianceDto {
 
     private Long id;
 
-    @NotBlank
-    @Size(max = 100)
+    @NotBlank(message = "{validation.required}")
+    @Size(max = 100, message = "{validation.size.max}")
     private String name;
 
-    @NotNull
+    @NotNull(message = "{validation.required}")
     private Category category;
 
-    @NotBlank
-    @Size(max = 100)
+    @NotBlank(message = "{validation.required}")
+    @Size(max = 100, message = "{validation.size.max}")
     private String model;
 
-    @NotNull
+    @NotNull(message = "{validation.required}")
     private Long manufacturerId;
 
     private String manufacturerName;
 
-    @NotNull
+    @NotNull(message = "{validation.required}")
     private PowerType powerType;
 
-    @NotBlank
-    @Size(max = 255)
+    @NotBlank(message = "{validation.required}")
+    @Size(max = 255, message = "{validation.size.max}")
     private String characteristic;
 
-    @NotBlank
-    @Size(max = 255)
+    @NotBlank(message = "{validation.required}")
+    @Size(max = 255, message = "{validation.size.max}")
     private String description;
 
-    @NotNull
-    @Positive
+    @NotNull(message = "{validation.required}")
+    @Positive(message = "{validation.positive}")
     private Integer power;
 
-    @NotNull
-    @Positive
-    @Digits(integer = 10, fraction = 2)
+    @NotNull(message = "{validation.required}")
+    @Positive(message = "{validation.positive}")
+    @Digits(integer = 10, fraction = 2, message = "{validation.digits}")
     private BigDecimal price;
 }

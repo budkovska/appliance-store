@@ -17,7 +17,7 @@ public class ManufacturerDto {
 
     private Long id;
 
-    @NotBlank
-    @Size(max = 100)
+    @NotBlank(message = "{validation.required}")
+    @Size(max = 100, message = "{validation.size.max}")
     private String name;
 }

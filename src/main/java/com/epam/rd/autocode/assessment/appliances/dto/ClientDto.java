@@ -13,7 +13,7 @@ import lombok.ToString;
 @ToString(callSuper = true)
 public class ClientDto extends UserDto {
 
-    @NotBlank
-    @Size(max = 30)
+    @NotBlank(message = "{validation.required}")
+    @Size(max = 30, message = "{validation.size.max}")
     private String card;
 }

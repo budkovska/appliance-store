@@ -60,6 +60,8 @@ public class SecurityConfig {
                     auth
                             .requestMatchers(antMatcher("/"), antMatcher("/login"),
                                     antMatcher("/error"), antMatcher("/styles/**")).permitAll()
+                            .requestMatchers(antMatcher("/"), antMatcher("/login"), antMatcher("/register"),
+                                    antMatcher("/error"), antMatcher("/styles/**")).permitAll()
                             .requestMatchers(antMatcher("/clients/**"), antMatcher("/employees/**"),
                                     antMatcher("/manufacturers/**")).hasRole("EMPLOYEE")
                             .requestMatchers(antMatcher("/appliances/add"), antMatcher("/appliances/add-appliance"),
