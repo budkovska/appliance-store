@@ -1,5 +1,6 @@
 package com.epam.rd.autocode.assessment.appliances.exception;
 
+import com.epam.rd.autocode.assessment.appliances.aspect.SecurityLog;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -16,21 +17,21 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ModelAndView notFound(ResourceNotFoundException e, HttpServletRequest request) {
-        log.warn("Not found: {} {} | {}", request.getMethod(), request.getRequestURI(), e.getMessage());
+        log.debug("Not found: {} {} | {}", request.getMethod(), request.getRequestURI(), e.getMessage());
         return page(HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ModelAndView accessDenied(AccessDeniedException e, HttpServletRequest request) {
-        log.warn("SECURITY | Access denied: user={} {} {}",
-                request.getRemoteUser(), request.getMethod(), request.getRequestURI());
+        SecurityLog.accessDenied(SecurityLog.currentUser(), request.getMethod(),
+                request.getRequestURI(), e.getClass().getSimpleName());
         return page(HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler({ResourceInUseException.class, DuplicateEmailException.class,
             SelfDeletionException.class, OrderLockedException.class})
     public ModelAndView conflict(RuntimeException e, HttpServletRequest request) {
-        log.warn("Conflict: {} {} | {}", request.getMethod(), request.getRequestURI(), e.getMessage());
+        log.debug("Conflict: {} {} | {}", request.getMethod(), request.getRequestURI(), e.getMessage());
         return page(HttpStatus.CONFLICT);
     }
 

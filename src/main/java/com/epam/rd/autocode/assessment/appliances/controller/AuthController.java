@@ -1,5 +1,6 @@
 package com.epam.rd.autocode.assessment.appliances.controller;
 
+import com.epam.rd.autocode.assessment.appliances.aspect.SecurityLog;
 import com.epam.rd.autocode.assessment.appliances.dto.RegistrationDto;
 import com.epam.rd.autocode.assessment.appliances.exception.DuplicateEmailException;
 import com.epam.rd.autocode.assessment.appliances.security.JwtCookieService;
@@ -9,7 +10,6 @@ import com.epam.rd.autocode.assessment.appliances.service.ClientService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -26,7 +26,6 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-@Slf4j
 @Controller
 @RequiredArgsConstructor
 public class AuthController {
@@ -51,7 +50,7 @@ public class AuthController {
                         HttpServletResponse response) {
 
         if (loginAttempts.isLocked(email)) {
-            log.warn("SECURITY | Login rejected, account temporarily locked: {}", email);
+            SecurityLog.accountLocked(email);
             return "redirect:/login?locked";
         }
 
@@ -61,12 +60,12 @@ public class AuthController {
 
             loginAttempts.loginSucceeded(email);
             cookieService.addToken(response, jwtService.generateToken(auth.getName()));
-            log.info("SECURITY | Login success: {}", auth.getName());
+            SecurityLog.loginSuccess(auth.getName());
             return "redirect:/";
 
         } catch (AuthenticationException e) {
             loginAttempts.loginFailed(email);
-            log.warn("SECURITY | Login failed: {}", email);
+            SecurityLog.loginFailed(email);
             return "redirect:/login?error";
         }
     }
@@ -105,7 +104,7 @@ public class AuthController {
             result.rejectValue("email", "validation.email.unique");
             return "auth/register";
         }
-        log.info("SECURITY | New client registered: {}", registration.getEmail());
+        SecurityLog.registered(registration.getEmail());
         return "redirect:/login?registered";
     }
 

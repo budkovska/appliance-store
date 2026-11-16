@@ -1,10 +1,11 @@
 package com.epam.rd.autocode.assessment.appliances.config;
 
+import com.epam.rd.autocode.assessment.appliances.aspect.SecurityLog;
+import com.epam.rd.autocode.assessment.appliances.exception.LoggingAccessDeniedHandler;
 import com.epam.rd.autocode.assessment.appliances.security.JwtAuthenticationFilter;
 import com.epam.rd.autocode.assessment.appliances.security.JwtCookieService;
 import com.epam.rd.autocode.assessment.appliances.security.JwtService;
 import io.jsonwebtoken.JwtException;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,7 +24,6 @@ import org.springframework.security.web.session.SessionManagementFilter;
 
 import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
 
-@Slf4j
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -44,6 +44,7 @@ public class SecurityConfig {
                                            JwtService jwtService,
                                            JwtCookieService cookieService,
                                            UserDetailsService userDetailsService,
+                                           LoggingAccessDeniedHandler accessDeniedHandler,
                                            @Value("${spring.h2.console.enabled:false}") boolean h2ConsoleEnabled)
             throws Exception {
 
@@ -72,7 +73,9 @@ public class SecurityConfig {
                             .anyRequest().authenticated();
                 })
 
-                .exceptionHandling(e -> e.authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login")))
+                .exceptionHandling(e -> e
+                        .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"))
+                        .accessDeniedHandler(accessDeniedHandler))
 
                 .addFilterAfter(jwtFilter, SessionManagementFilter.class)
 
@@ -89,9 +92,8 @@ public class SecurityConfig {
                                     })
                                     .orElse("unknown");
                             cookieService.clear(response);
-                            log.info("SECURITY | Logout: {}", who);
-                        })
-                        .logoutSuccessUrl("/"))
+                            SecurityLog.logout(who);
+                        }))
 
                 .csrf(csrf -> {
                     csrf.csrfTokenRepository(new CookieCsrfTokenRepository());

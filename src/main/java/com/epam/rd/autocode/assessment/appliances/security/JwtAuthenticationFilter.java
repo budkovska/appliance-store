@@ -1,5 +1,6 @@
 package com.epam.rd.autocode.assessment.appliances.security;
 
+import com.epam.rd.autocode.assessment.appliances.aspect.SecurityLog;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
@@ -56,7 +57,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 log.debug("JWT expired, cookie cleared");
                 cookieService.clear(response);
             } catch (JwtException | IllegalArgumentException | UsernameNotFoundException e) {
-                log.warn("Rejected JWT from {}: {}", request.getRemoteAddr(), e.getMessage());
+                SecurityLog.tokenRejected(request.getRemoteAddr(), e.getClass().getSimpleName());
                 cookieService.clear(response);
             }
         }

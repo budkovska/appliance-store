@@ -1,5 +1,6 @@
 package com.epam.rd.autocode.assessment.appliances.security;
 
+import com.epam.rd.autocode.assessment.appliances.aspect.SecurityLog;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -42,6 +43,7 @@ public class LoginAttemptService {
         states.compute(key(email), (k, old) -> {
             int failures = (old == null) ? 1 : old.failures() + 1;
             if (failures >= maxFailures) {
+                SecurityLog.lockedOut(email, maxFailures, lockDuration.toMinutes());
                 return new State(0, Instant.now().plus(lockDuration));
             }
             return new State(failures, null);
