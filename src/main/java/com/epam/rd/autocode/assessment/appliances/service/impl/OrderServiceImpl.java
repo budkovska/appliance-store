@@ -14,11 +14,13 @@ import com.epam.rd.autocode.assessment.appliances.repository.ApplianceRepository
 import com.epam.rd.autocode.assessment.appliances.repository.ClientRepository;
 import com.epam.rd.autocode.assessment.appliances.repository.EmployeeRepository;
 import com.epam.rd.autocode.assessment.appliances.repository.OrdersRepository;
+import com.epam.rd.autocode.assessment.appliances.security.CurrentUser;
 import com.epam.rd.autocode.assessment.appliances.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +31,9 @@ import java.math.BigDecimal;
 @Transactional
 public class OrderServiceImpl implements OrderService {
 
+    private static final String EMPLOYEE_OR_OWNER =
+            "hasRole('EMPLOYEE') or @orderSecurity.isOwner(#orderId, authentication)";
+
     private final OrdersRepository ordersRepository;
     private final ClientRepository clientRepository;
     private final EmployeeRepository employeeRepository;
@@ -37,45 +42,51 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<OrderDto> findAllFor(String email, boolean employee, Pageable pageable) {
-        Page<Orders> page = employee
+    @PreAuthorize("isAuthenticated()")
+    public Page<OrderDto> findAllForCurrentUser(Pageable pageable) {
+        Page<Orders> page = CurrentUser.isEmployee()
                 ? ordersRepository.findAll(pageable)
-                : ordersRepository.findByClientEmail(email, pageable);
+                : ordersRepository.findByClientEmail(CurrentUser.email(), pageable);
         return page.map(orderMapper::toDto);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public OrderDto findById(Long id, String email, boolean employee) {
-        return orderMapper.toDto(getAccessible(id, email, employee));
+    @PreAuthorize("hasRole('EMPLOYEE') or @orderSecurity.isOwner(#id, authentication)")
+    public OrderDto findById(Long id) {
+        return orderMapper.toDto(find(id));
     }
 
     @Loggable
     @Override
-    public OrderDto create(String email, boolean employee, Long clientId) {
-        Client client;
-        if (employee) {
-            if (clientId == null) {
-                throw new IllegalArgumentException("Client must be selected");
-            }
-            client = clientRepository.findById(clientId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Client", clientId));
-        } else {
-            client = clientRepository.findFirstByEmailIgnoreCase(email)
-                    .orElseThrow(() -> new ResourceNotFoundException("Client", email));
+    @PreAuthorize("hasRole('EMPLOYEE')")
+    public OrderDto createForClient(Long clientId) {
+        if (clientId == null) {
+            throw new IllegalArgumentException("Client must be selected");
         }
-        Orders order = new Orders();
-        order.setClient(client);
-        return orderMapper.toDto(ordersRepository.save(order));
+        Client client = clientRepository.findById(clientId)
+                .orElseThrow(() -> new ResourceNotFoundException("Client", clientId));
+        return createFor(client);
     }
 
     @Loggable
     @Override
-    public void addRow(Long orderId, Long applianceId, Long number, String email, boolean employee) {
+    @PreAuthorize("hasRole('CLIENT')")
+    public OrderDto createForCurrentClient() {
+        String email = CurrentUser.email();
+        Client client = clientRepository.findFirstByEmailIgnoreCase(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Client", email));
+        return createFor(client);
+    }
+
+    @Loggable
+    @Override
+    @PreAuthorize(EMPLOYEE_OR_OWNER)
+    public void addRow(Long orderId, Long applianceId, Long number) {
         if (number == null || number <= 0) {
             throw new InvalidQuantityException(number);
         }
-        Orders order = getEditable(orderId, email, employee);
+        Orders order = getEditable(orderId);
         Appliance appliance = applianceRepository.findById(applianceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Appliance", applianceId));
 
@@ -88,32 +99,47 @@ public class OrderServiceImpl implements OrderService {
 
     @Loggable
     @Override
-    public void removeRow(Long orderId, Long rowId, String email, boolean employee) {
-        Orders order = getEditable(orderId, email, employee);
+    @PreAuthorize(EMPLOYEE_OR_OWNER)
+    public void removeRow(Long orderId, Long rowId) {
+        Orders order = getEditable(orderId);
         order.getOrderRowSet().removeIf(r -> r.getId().equals(rowId));
     }
 
     @Loggable
     @Override
-    public void delete(Long orderId, String email, boolean employee) {
-        ordersRepository.delete(getAccessible(orderId, email, employee));
+    @PreAuthorize(EMPLOYEE_OR_OWNER)
+    public void delete(Long orderId) {
+        Orders order = find(orderId);
+        if (Boolean.TRUE.equals(order.getApproved()) && !CurrentUser.isEmployee()) {
+            throw new OrderLockedException(orderId);
+        }
+        ordersRepository.delete(order);
     }
 
     @Loggable
     @Override
-    public void approve(Long orderId, String employeeEmail) {
+    @Secured("ROLE_EMPLOYEE")
+    public void approve(Long orderId) {
         Orders order = find(orderId);
-        order.setEmployee(employeeRepository.findFirstByEmailIgnoreCase(employeeEmail)
-                .orElseThrow(() -> new ResourceNotFoundException("Employee", employeeEmail)));
+        String email = CurrentUser.email();
+        order.setEmployee(employeeRepository.findFirstByEmailIgnoreCase(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee", email)));
         order.setApproved(true);
     }
 
     @Loggable
     @Override
+    @Secured("ROLE_EMPLOYEE")
     public void unapprove(Long orderId) {
         Orders order = find(orderId);
         order.setEmployee(null);
         order.setApproved(false);
+    }
+
+    private OrderDto createFor(Client client) {
+        Orders order = new Orders();
+        order.setClient(client);
+        return orderMapper.toDto(ordersRepository.save(order));
     }
 
     private Orders find(Long id) {
@@ -121,16 +147,8 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new ResourceNotFoundException("Order", id));
     }
 
-    private Orders getAccessible(Long id, String email, boolean employee) {
+    private Orders getEditable(Long id) {
         Orders order = find(id);
-        if (!employee && !order.getClient().getEmail().equalsIgnoreCase(email)) {
-            throw new AccessDeniedException("Not your order");
-        }
-        return order;
-    }
-
-    private Orders getEditable(Long id, String email, boolean employee) {
-        Orders order = getAccessible(id, email, employee);
         if (Boolean.TRUE.equals(order.getApproved())) {
             throw new OrderLockedException(id);
         }

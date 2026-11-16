@@ -12,6 +12,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,24 +28,28 @@ public class ManufacturerServiceImpl implements ManufacturerService {
 
     @Override
     @Transactional(readOnly = true)
+    @PreAuthorize("isAuthenticated()")
     public Page<ManufacturerDto> findAll(Pageable pageable) {
         return repository.findAll(pageable).map(this::toDto);
     }
 
     @Override
     @Transactional(readOnly = true)
+    @PreAuthorize("isAuthenticated()")
     public List<ManufacturerDto> findAll() {
         return repository.findAll().stream().map(this::toDto).toList();
     }
 
     @Override
     @Transactional(readOnly = true)
+    @PreAuthorize("isAuthenticated()")
     public ManufacturerDto findById(Long id) {
         return toDto(find(id));
     }
 
     @Loggable
     @Override
+    @PreAuthorize("hasRole('EMPLOYEE')")
     public ManufacturerDto save(ManufacturerDto dto) {
         Manufacturer entity = dto.getId() == null ? new Manufacturer() : find(dto.getId());
         modelMapper.map(dto, entity);
@@ -53,6 +58,7 @@ public class ManufacturerServiceImpl implements ManufacturerService {
 
     @Loggable
     @Override
+    @PreAuthorize("hasRole('EMPLOYEE')")
     public void delete(Long id) {
         Manufacturer entity = find(id);
         try {

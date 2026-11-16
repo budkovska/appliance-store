@@ -14,6 +14,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -33,24 +34,28 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     @Transactional(readOnly = true)
+    @PreAuthorize("hasRole('EMPLOYEE')")
     public Page<EmployeeDto> findAll(Pageable pageable) {
         return repository.findAll(pageable).map(this::toDto);
     }
 
     @Override
     @Transactional(readOnly = true)
+    @PreAuthorize("hasRole('EMPLOYEE')")
     public List<EmployeeDto> findAll() {
         return repository.findAll().stream().map(this::toDto).toList();
     }
 
     @Override
     @Transactional(readOnly = true)
+    @PreAuthorize("hasRole('EMPLOYEE')")
     public EmployeeDto findById(Long id) {
         return toDto(find(id));
     }
 
     @Loggable
     @Override
+    @PreAuthorize("hasRole('EMPLOYEE')")
     public EmployeeDto save(EmployeeDto dto) {
         Employee entity = dto.getId() == null ? new Employee() : find(dto.getId());
         String currentHash = entity.getPassword();
@@ -69,6 +74,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Loggable
     @Override
+    @PreAuthorize("hasRole('EMPLOYEE')")
     public void delete(Long id) {
         String currentEmail = SecurityContextHolder.getContext().getAuthentication().getName();
         Employee employee = find(id);

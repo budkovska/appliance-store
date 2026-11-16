@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,24 +31,28 @@ public class ApplianceServiceImpl implements ApplianceService {
 
     @Override
     @Transactional(readOnly = true)
+    @PreAuthorize("isAuthenticated()")
     public Page<ApplianceDto> findAll(Pageable pageable) {
         return repository.findAll(pageable).map(mapper::toDto);
     }
 
     @Override
     @Transactional(readOnly = true)
+    @PreAuthorize("isAuthenticated()")
     public List<ApplianceDto> findAll() {
         return repository.findAll().stream().map(mapper::toDto).toList();
     }
 
     @Override
     @Transactional(readOnly = true)
+    @PreAuthorize("isAuthenticated()")
     public ApplianceDto findById(Long id) {
         return mapper.toDto(find(id));
     }
 
     @Loggable
     @Override
+    @PreAuthorize("hasRole('EMPLOYEE')")
     public ApplianceDto save(ApplianceDto dto) {
         Manufacturer manufacturer = manufacturerRepository.findById(dto.getManufacturerId())
                 .orElseThrow(() -> new ResourceNotFoundException("Manufacturer", dto.getManufacturerId()));
@@ -58,6 +63,7 @@ public class ApplianceServiceImpl implements ApplianceService {
 
     @Loggable
     @Override
+    @PreAuthorize("hasRole('EMPLOYEE')")
     public void delete(Long id) {
         Appliance entity = find(id);
         try {

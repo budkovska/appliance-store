@@ -13,6 +13,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,25 +32,41 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     @Transactional(readOnly = true)
+    @PreAuthorize("hasRole('EMPLOYEE')")
     public Page<ClientDto> findAll(Pageable pageable) {
         return repository.findAll(pageable).map(this::toDto);
     }
 
     @Override
     @Transactional(readOnly = true)
+    @PreAuthorize("hasRole('EMPLOYEE')")
     public List<ClientDto> findAll() {
         return repository.findAll().stream().map(this::toDto).toList();
     }
 
     @Override
     @Transactional(readOnly = true)
+    @PreAuthorize("hasRole('EMPLOYEE')")
     public ClientDto findById(Long id) {
         return toDto(find(id));
     }
 
     @Loggable
     @Override
+    @PreAuthorize("isAnonymous()")
+    public ClientDto register(ClientDto dto) {
+        dto.setId(null);          // реєстрація ніколи не змінює існуючого клієнта
+        return persist(dto);
+    }
+
+    @Loggable
+    @Override
+    @PreAuthorize("hasRole('EMPLOYEE')")
     public ClientDto save(ClientDto dto) {
+        return persist(dto);
+    }
+
+    private ClientDto persist(ClientDto dto) {
         Client entity = dto.getId() == null ? new Client() : find(dto.getId());
         String currentHash = entity.getPassword();
 
@@ -67,6 +84,7 @@ public class ClientServiceImpl implements ClientService {
 
     @Loggable
     @Override
+    @PreAuthorize("hasRole('EMPLOYEE')")
     public void delete(Long id) {
         Client entity = find(id);
         try {

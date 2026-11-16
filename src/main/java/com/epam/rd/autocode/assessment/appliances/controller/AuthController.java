@@ -99,7 +99,7 @@ public class AuthController {
         }
 
         try {
-            clientService.save(registration);
+            clientService.register(registration);
         } catch (DuplicateEmailException e) {
             result.rejectValue("email", "validation.email.unique");
             return "auth/register";

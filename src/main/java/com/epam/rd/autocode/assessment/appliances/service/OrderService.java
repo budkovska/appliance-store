@@ -5,12 +5,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface OrderService {
-    Page<OrderDto> findAllFor(String email, boolean employee, Pageable pageable);
-    OrderDto findById(Long id, String email, boolean employee);
-    OrderDto create(String email, boolean employee, Long clientId);
-    void addRow(Long orderId, Long applianceId, Long number, String email, boolean employee);
-    void removeRow(Long orderId, Long rowId, String email, boolean employee);
-    void delete(Long orderId, String email, boolean employee);
-    void approve(Long orderId, String employeeEmail);
+    Page<OrderDto> findAllForCurrentUser(Pageable pageable);
+    OrderDto findById(Long id);
+    OrderDto createForClient(Long clientId);
+    OrderDto createForCurrentClient();
+    void addRow(Long orderId, Long applianceId, Long number);
+    void removeRow(Long orderId, Long rowId);
+    void delete(Long orderId);
+    void approve(Long orderId);
     void unapprove(Long orderId);
 }

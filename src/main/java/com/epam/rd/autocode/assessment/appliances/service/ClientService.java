@@ -10,6 +10,7 @@ public interface ClientService {
     Page<ClientDto> findAll(Pageable pageable);
     List<ClientDto> findAll();
     ClientDto findById(Long id);
+    ClientDto register(ClientDto dto);
     ClientDto save(ClientDto dto);
     void delete(Long id);
 }
