@@ -1,13 +1,13 @@
 package com.epam.rd.autocode.assessment.appliances.controller;
 
 import com.epam.rd.autocode.assessment.appliances.dto.ApplianceDto;
+import com.epam.rd.autocode.assessment.appliances.exception.ResourceInUseException;
 import com.epam.rd.autocode.assessment.appliances.model.Category;
 import com.epam.rd.autocode.assessment.appliances.model.PowerType;
 import com.epam.rd.autocode.assessment.appliances.service.ApplianceService;
 import com.epam.rd.autocode.assessment.appliances.service.ManufacturerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -61,7 +61,7 @@ public class ApplianceController {
     public String delete(@PathVariable Long id) {
         try {
             applianceService.delete(id);
-        } catch (DataIntegrityViolationException e) {
+        } catch (ResourceInUseException e) {
             return "redirect:/appliances?deleteError";
         }
         return "redirect:/appliances";

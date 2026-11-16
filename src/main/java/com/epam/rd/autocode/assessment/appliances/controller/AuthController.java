@@ -1,6 +1,7 @@
 package com.epam.rd.autocode.assessment.appliances.controller;
 
 import com.epam.rd.autocode.assessment.appliances.dto.RegistrationDto;
+import com.epam.rd.autocode.assessment.appliances.exception.DuplicateEmailException;
 import com.epam.rd.autocode.assessment.appliances.security.JwtCookieService;
 import com.epam.rd.autocode.assessment.appliances.security.JwtService;
 import com.epam.rd.autocode.assessment.appliances.security.LoginAttemptService;
@@ -98,7 +99,12 @@ public class AuthController {
             return "auth/register";
         }
 
-        clientService.save(registration);
+        try {
+            clientService.save(registration);
+        } catch (DuplicateEmailException e) {
+            result.rejectValue("email", "validation.email.unique");
+            return "auth/register";
+        }
         log.info("SECURITY | New client registered: {}", registration.getEmail());
         return "redirect:/login?registered";
     }

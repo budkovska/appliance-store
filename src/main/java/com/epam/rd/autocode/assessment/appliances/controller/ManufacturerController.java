@@ -1,10 +1,10 @@
 package com.epam.rd.autocode.assessment.appliances.controller;
 
 import com.epam.rd.autocode.assessment.appliances.dto.ManufacturerDto;
+import com.epam.rd.autocode.assessment.appliances.exception.ResourceInUseException;
 import com.epam.rd.autocode.assessment.appliances.service.ManufacturerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -54,7 +54,7 @@ public class ManufacturerController {
     public String delete(@PathVariable Long id) {
         try {
             service.delete(id);
-        } catch (DataIntegrityViolationException e) {
+        } catch (ResourceInUseException e) {
             return "redirect:/manufacturers?deleteError";
         }
         return "redirect:/manufacturers";

@@ -1,6 +1,8 @@
 package com.epam.rd.autocode.assessment.appliances.controller;
 
 import com.epam.rd.autocode.assessment.appliances.dto.OrderDto;
+import com.epam.rd.autocode.assessment.appliances.exception.InvalidQuantityException;
+import com.epam.rd.autocode.assessment.appliances.exception.OrderLockedException;
 import com.epam.rd.autocode.assessment.appliances.service.ApplianceService;
 import com.epam.rd.autocode.assessment.appliances.service.ClientService;
 import com.epam.rd.autocode.assessment.appliances.service.OrderService;
@@ -69,9 +71,9 @@ public class OrdersController {
                                Authentication auth) {
         try {
             orderService.addRow(id, applianceId, numbers, auth.getName(), isEmployee(auth));
-        } catch (IllegalArgumentException e) {
+        } catch (InvalidQuantityException e) {
             return redirectToEdit(id) + "?numberError";
-        } catch (IllegalStateException e) {
+        } catch (OrderLockedException e) {
             return redirectToEdit(id) + "?lockedError";
         }
         return redirectToEdit(id);
@@ -81,7 +83,7 @@ public class OrdersController {
     public String removeRow(@PathVariable Long id, @PathVariable Long rowId, Authentication auth) {
         try {
             orderService.removeRow(id, rowId, auth.getName(), isEmployee(auth));
-        } catch (IllegalStateException e) {
+        } catch (OrderLockedException e) {
             return redirectToEdit(id) + "?lockedError";
         }
         return redirectToEdit(id);

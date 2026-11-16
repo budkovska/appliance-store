@@ -2,11 +2,16 @@ package com.epam.rd.autocode.assessment.appliances.service.impl;
 
 import com.epam.rd.autocode.assessment.appliances.aspect.Loggable;
 import com.epam.rd.autocode.assessment.appliances.dto.EmployeeDto;
+import com.epam.rd.autocode.assessment.appliances.exception.DuplicateEmailException;
+import com.epam.rd.autocode.assessment.appliances.exception.ResourceInUseException;
+import com.epam.rd.autocode.assessment.appliances.exception.ResourceNotFoundException;
+import com.epam.rd.autocode.assessment.appliances.exception.SelfDeletionException;
 import com.epam.rd.autocode.assessment.appliances.model.Employee;
 import com.epam.rd.autocode.assessment.appliances.repository.EmployeeRepository;
 import com.epam.rd.autocode.assessment.appliances.service.EmployeeService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
@@ -52,11 +56,15 @@ public class EmployeeServiceImpl implements EmployeeService {
         String currentHash = entity.getPassword();
 
         modelMapper.map(dto, entity);
-
         entity.setPassword(StringUtils.hasText(dto.getPassword())
                 ? passwordEncoder.encode(dto.getPassword())
                 : currentHash);
-        return toDto(repository.save(entity));
+
+        try {
+            return toDto(repository.saveAndFlush(entity));
+        } catch (DataIntegrityViolationException e) {
+            throw new DuplicateEmailException(dto.getEmail());
+        }
     }
 
     @Loggable
@@ -66,15 +74,19 @@ public class EmployeeServiceImpl implements EmployeeService {
         Employee employee = find(id);
 
         if (employee.getEmail().equalsIgnoreCase(currentEmail)) {
-            throw new IllegalStateException("Cannot delete yourself");
+            throw new SelfDeletionException();
         }
-        repository.delete(employee);
-        repository.flush();
+        try {
+            repository.delete(employee);
+            repository.flush();
+        } catch (DataIntegrityViolationException e) {
+            throw new ResourceInUseException("Employee", id);
+        }
     }
 
     private Employee find(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Employee not found: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Employee", id));
     }
 
     private EmployeeDto toDto(Employee employee) {

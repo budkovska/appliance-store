@@ -1,10 +1,11 @@
 package com.epam.rd.autocode.assessment.appliances.controller;
 
 import com.epam.rd.autocode.assessment.appliances.dto.ClientDto;
+import com.epam.rd.autocode.assessment.appliances.exception.DuplicateEmailException;
+import com.epam.rd.autocode.assessment.appliances.exception.ResourceInUseException;
 import com.epam.rd.autocode.assessment.appliances.service.ClientService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -44,12 +45,17 @@ public class ClientController {
     @PostMapping("/add-client")
     public String save(@Valid @ModelAttribute("client") ClientDto client, BindingResult result) {
         if (client.getId() == null && !StringUtils.hasText(client.getPassword())) {
-            result.rejectValue("password", "validation.password.required", "Password is required");
+            result.rejectValue("password", "validation.password.required");
         }
         if (result.hasErrors()) {
             return "client/newClient";
         }
-        service.save(client);
+        try {
+            service.save(client);
+        } catch (DuplicateEmailException e) {
+            result.rejectValue("email", "validation.email.unique");
+            return "client/newClient";
+        }
         return "redirect:/clients";
     }
 
@@ -57,7 +63,7 @@ public class ClientController {
     public String delete(@PathVariable Long id) {
         try {
             service.delete(id);
-        } catch (DataIntegrityViolationException e) {
+        } catch (ResourceInUseException e) {
             return "redirect:/clients?deleteError";
         }
         return "redirect:/clients";

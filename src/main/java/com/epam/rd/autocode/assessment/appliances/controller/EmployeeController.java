@@ -1,10 +1,12 @@
 package com.epam.rd.autocode.assessment.appliances.controller;
 
 import com.epam.rd.autocode.assessment.appliances.dto.EmployeeDto;
+import com.epam.rd.autocode.assessment.appliances.exception.DuplicateEmailException;
+import com.epam.rd.autocode.assessment.appliances.exception.ResourceInUseException;
+import com.epam.rd.autocode.assessment.appliances.exception.SelfDeletionException;
 import com.epam.rd.autocode.assessment.appliances.service.EmployeeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -44,12 +46,17 @@ public class EmployeeController {
     @PostMapping("/add-employee")
     public String save(@Valid @ModelAttribute("employee") EmployeeDto employee, BindingResult result) {
         if (employee.getId() == null && !StringUtils.hasText(employee.getPassword())) {
-            result.rejectValue("password", "validation.password.required", "Password is required");
+            result.rejectValue("password", "validation.password.required");
         }
         if (result.hasErrors()) {
             return "employee/newEmployee";
         }
-        service.save(employee);
+        try {
+            service.save(employee);
+        } catch (DuplicateEmailException e) {
+            result.rejectValue("email", "validation.email.unique");
+            return "employee/newEmployee";
+        }
         return "redirect:/employees";
     }
 
@@ -57,9 +64,9 @@ public class EmployeeController {
     public String delete(@PathVariable Long id) {
         try {
             service.delete(id);
-        } catch (IllegalStateException e) {
+        } catch (SelfDeletionException e) {
             return "redirect:/employees?selfDeleteError";
-        } catch (DataIntegrityViolationException e) {
+        } catch (ResourceInUseException e) {
             return "redirect:/employees?deleteError";
         }
         return "redirect:/employees";

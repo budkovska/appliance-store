@@ -2,11 +2,15 @@ package com.epam.rd.autocode.assessment.appliances.service.impl;
 
 import com.epam.rd.autocode.assessment.appliances.aspect.Loggable;
 import com.epam.rd.autocode.assessment.appliances.dto.ClientDto;
+import com.epam.rd.autocode.assessment.appliances.exception.DuplicateEmailException;
+import com.epam.rd.autocode.assessment.appliances.exception.ResourceInUseException;
+import com.epam.rd.autocode.assessment.appliances.exception.ResourceNotFoundException;
 import com.epam.rd.autocode.assessment.appliances.model.Client;
 import com.epam.rd.autocode.assessment.appliances.repository.ClientRepository;
 import com.epam.rd.autocode.assessment.appliances.service.ClientService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -15,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
@@ -51,23 +54,32 @@ public class ClientServiceImpl implements ClientService {
         String currentHash = entity.getPassword();
 
         modelMapper.map(dto, entity);
-
         entity.setPassword(StringUtils.hasText(dto.getPassword())
                 ? passwordEncoder.encode(dto.getPassword())
                 : currentHash);
-        return toDto(repository.save(entity));
+
+        try {
+            return toDto(repository.saveAndFlush(entity));
+        } catch (DataIntegrityViolationException e) {
+            throw new DuplicateEmailException(dto.getEmail());
+        }
     }
 
     @Loggable
     @Override
     public void delete(Long id) {
-        repository.deleteById(id);
-        repository.flush();
+        Client entity = find(id);
+        try {
+            repository.delete(entity);
+            repository.flush();
+        } catch (DataIntegrityViolationException e) {
+            throw new ResourceInUseException("Client", id);
+        }
     }
 
     private Client find(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Client not found: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Client", id));
     }
 
     private ClientDto toDto(Client client) {
