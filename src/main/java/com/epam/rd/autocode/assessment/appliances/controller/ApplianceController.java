@@ -1,6 +1,7 @@
 package com.epam.rd.autocode.assessment.appliances.controller;
 
 import com.epam.rd.autocode.assessment.appliances.dto.ApplianceDto;
+import com.epam.rd.autocode.assessment.appliances.dto.ApplianceListQuery;
 import com.epam.rd.autocode.assessment.appliances.exception.ResourceInUseException;
 import com.epam.rd.autocode.assessment.appliances.model.Category;
 import com.epam.rd.autocode.assessment.appliances.model.PowerType;
@@ -16,6 +17,8 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @Controller
 @RequestMapping("/appliances")
 @RequiredArgsConstructor
@@ -24,11 +27,24 @@ public class ApplianceController {
     private final ApplianceService applianceService;
     private final ManufacturerService manufacturerService;
 
+    private static final Map<String, String> SORTABLE = Map.of(
+            "id", "id",
+            "name", "name",
+            "category", "category",
+            "model", "model",
+            "manufacturer", "manufacturer.name",
+            "powerType", "powerType",
+            "power", "power",
+            "price", "price");
+
     @GetMapping
-    public String list(@PageableDefault(size = 10, sort = "id") Pageable pageable, Model model) {
-        Page<ApplianceDto> page = applianceService.findAll(pageable);
+    public String list(@ModelAttribute("q") ApplianceListQuery q, Model model) {
+        Pageable pageable = q.resolve(SORTABLE, "id");
+        Page<ApplianceDto> page = applianceService.search(
+                q.getSearch(), q.getCategory(), q.getPowerType(), q.getManufacturerId(), pageable);
         model.addAttribute("appliances", page.getContent());
         model.addAttribute("page", page);
+        fillFormData(model);
         return "appliance/appliances";
     }
 

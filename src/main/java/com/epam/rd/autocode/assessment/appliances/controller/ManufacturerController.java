@@ -1,5 +1,6 @@
 package com.epam.rd.autocode.assessment.appliances.controller;
 
+import com.epam.rd.autocode.assessment.appliances.dto.ListQuery;
 import com.epam.rd.autocode.assessment.appliances.dto.ManufacturerDto;
 import com.epam.rd.autocode.assessment.appliances.exception.ResourceInUseException;
 import com.epam.rd.autocode.assessment.appliances.service.ManufacturerService;
@@ -13,6 +14,8 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @Controller
 @RequestMapping("/manufacturers")
 @RequiredArgsConstructor
@@ -20,9 +23,14 @@ public class ManufacturerController {
 
     private final ManufacturerService service;
 
+    private static final Map<String, String> SORTABLE = Map.of(
+            "id", "id",
+            "name", "name");
+
     @GetMapping
-    public String list(@PageableDefault(size = 10, sort = "id") Pageable pageable, Model model) {
-        Page<ManufacturerDto> page = service.findAll(pageable);
+    public String list(@ModelAttribute("q") ListQuery q, Model model) {
+        Pageable pageable = q.resolve(SORTABLE, "id");
+        Page<ManufacturerDto> page = service.search(q.getSearch(), pageable);
         model.addAttribute("manufacturers", page.getContent());
         model.addAttribute("page", page);
         return "manufacture/manufacturers";

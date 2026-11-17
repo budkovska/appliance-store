@@ -8,6 +8,7 @@ import com.epam.rd.autocode.assessment.appliances.exception.ResourceNotFoundExce
 import com.epam.rd.autocode.assessment.appliances.exception.SelfDeletionException;
 import com.epam.rd.autocode.assessment.appliances.model.Employee;
 import com.epam.rd.autocode.assessment.appliances.repository.EmployeeRepository;
+import com.epam.rd.autocode.assessment.appliances.repository.specification.SearchUtils;
 import com.epam.rd.autocode.assessment.appliances.service.EmployeeService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -35,8 +36,8 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     @Transactional(readOnly = true)
     @PreAuthorize("hasRole('EMPLOYEE')")
-    public Page<EmployeeDto> findAll(Pageable pageable) {
-        return repository.findAll(pageable).map(this::toDto);
+    public Page<EmployeeDto> search(String search, Pageable pageable) {
+        return repository.search(SearchUtils.likePattern(search), pageable).map(this::toDto);
     }
 
     @Override

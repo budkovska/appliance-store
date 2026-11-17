@@ -7,7 +7,7 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 public interface ClientService {
-    Page<ClientDto> findAll(Pageable pageable);
+    Page<ClientDto> search(String search, Pageable pageable);
     List<ClientDto> findAll();
     ClientDto findById(Long id);
     ClientDto register(ClientDto dto);

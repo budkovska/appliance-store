@@ -5,7 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface OrderService {
-    Page<OrderDto> findAllForCurrentUser(Pageable pageable);
+    Page<OrderDto> findAllForCurrentUser(String search, Boolean approved, Pageable pageable);
     OrderDto findById(Long id);
     OrderDto createForClient(Long clientId);
     OrderDto createForCurrentClient();

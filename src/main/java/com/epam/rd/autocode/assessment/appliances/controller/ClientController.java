@@ -1,6 +1,7 @@
 package com.epam.rd.autocode.assessment.appliances.controller;
 
 import com.epam.rd.autocode.assessment.appliances.dto.ClientDto;
+import com.epam.rd.autocode.assessment.appliances.dto.ListQuery;
 import com.epam.rd.autocode.assessment.appliances.exception.DuplicateEmailException;
 import com.epam.rd.autocode.assessment.appliances.exception.ResourceInUseException;
 import com.epam.rd.autocode.assessment.appliances.service.ClientService;
@@ -15,6 +16,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @Controller
 @RequestMapping("/clients")
 @RequiredArgsConstructor
@@ -22,9 +25,16 @@ public class ClientController {
 
     private final ClientService service;
 
+    private static final Map<String, String> SORTABLE = Map.of(
+            "id", "id",
+            "name", "name",
+            "email", "email",
+            "card", "card");
+
     @GetMapping
-    public String list(@PageableDefault(size = 10, sort = "id") Pageable pageable, Model model) {
-        Page<ClientDto> page = service.findAll(pageable);
+    public String list(@ModelAttribute("q") ListQuery q, Model model) {
+        Pageable pageable = q.resolve(SORTABLE, "id");
+        Page<ClientDto> page = service.search(q.getSearch(), pageable);
         model.addAttribute("clients", page.getContent());
         model.addAttribute("page", page);
         return "client/clients";

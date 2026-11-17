@@ -1,6 +1,7 @@
 package com.epam.rd.autocode.assessment.appliances.controller;
 
 import com.epam.rd.autocode.assessment.appliances.dto.OrderDto;
+import com.epam.rd.autocode.assessment.appliances.dto.OrderListQuery;
 import com.epam.rd.autocode.assessment.appliances.exception.InvalidQuantityException;
 import com.epam.rd.autocode.assessment.appliances.exception.OrderLockedException;
 import com.epam.rd.autocode.assessment.appliances.security.CurrentUser;
@@ -15,6 +16,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @Controller
 @RequestMapping("/orders")
 @RequiredArgsConstructor
@@ -24,9 +27,16 @@ public class OrdersController {
     private final ApplianceService applianceService;
     private final ClientService clientService;
 
+    private static final Map<String, String> SORTABLE = Map.of(
+            "id", "id",
+            "client", "client.name",
+            "employee", "employee.name",
+            "approved", "approved");
+
     @GetMapping
-    public String list(@PageableDefault(size = 10, sort = "id") Pageable pageable, Model model) {
-        Page<OrderDto> page = orderService.findAllForCurrentUser(pageable);
+    public String list(@ModelAttribute("q") OrderListQuery q, Model model) {
+        Pageable pageable = q.resolve(SORTABLE, "id");
+        Page<OrderDto> page = orderService.findAllForCurrentUser(q.getSearch(), q.approvedOrNull(), pageable);
         model.addAttribute("orders", page.getContent());
         model.addAttribute("page", page);
         return "order/orders";

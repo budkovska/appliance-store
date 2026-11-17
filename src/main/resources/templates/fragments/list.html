@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<th th:fragment="sortHeader(label, key, path)"
+    th:with="nextDir=${q.sort == key and q.dir == 'asc' ? 'desc' : 'asc'}">
+    <a class="text-white text-decoration-none"
+       th:href="@{${q.link(path, 0, null, key, nextDir)}}">
+        <span th:text="${label}"></span>
+        <i class="fa"
+           th:classappend="${q.sort != key ? 'fa-sort text-white-50' : (q.dir == 'asc' ? 'fa-sort-asc' : 'fa-sort-desc')}"></i>
+    </a>
+</th>
+
+<div th:fragment="pagination(path)"
+     class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+
+    <div class="text-muted small">
+        <span th:if="${page.totalElements > 0}"
+              th:text="#{pagination.showing(${page.number * page.size + 1}, ${page.number * page.size + page.numberOfElements}, ${page.totalElements})}"></span>
+        <span th:if="${page.totalElements == 0}" th:text="#{pagination.empty}"></span>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+        <span class="small text-muted" th:text="#{pagination.size}">Per page</span>
+        <div class="btn-group btn-group-sm">
+            <a th:each="s : ${q.pageSizes}" class="btn btn-outline-secondary"
+               th:classappend="${s == q.size} ? 'active'"
+               th:href="@{${q.link(path, 0, s, null, null)}}" th:text="${s}"></a>
+        </div>
+    </div>
+
+    <nav th:if="${page.totalPages > 1}"
+         th:with="endPage=${page.number + 2 < page.totalPages ? page.number + 2 : page.totalPages - 1},
+                  startPage=${page.number - 2 > 0 ? (page.number - 2 < endPage ? page.number - 2 : endPage) : 0}">
+        <ul class="pagination pagination-sm mb-0">
+            <li class="page-item" th:classappend="${page.first} ? 'disabled'">
+                <a class="page-link" th:href="@{${q.link(path, page.number - 1, null, null, null)}}">&laquo;</a>
+            </li>
+            <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
+                th:classappend="${i == page.number} ? 'active'">
+                <a class="page-link" th:href="@{${q.link(path, i, null, null, null)}}" th:text="${i + 1}"></a>
+            </li>
+            <li class="page-item" th:classappend="${page.last} ? 'disabled'">
+                <a class="page-link" th:href="@{${q.link(path, page.number + 1, null, null, null)}}">&raquo;</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+</body>
+</html>

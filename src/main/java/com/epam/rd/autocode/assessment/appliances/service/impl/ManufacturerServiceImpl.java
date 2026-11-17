@@ -6,6 +6,7 @@ import com.epam.rd.autocode.assessment.appliances.exception.ResourceInUseExcepti
 import com.epam.rd.autocode.assessment.appliances.exception.ResourceNotFoundException;
 import com.epam.rd.autocode.assessment.appliances.model.Manufacturer;
 import com.epam.rd.autocode.assessment.appliances.repository.ManufacturerRepository;
+import com.epam.rd.autocode.assessment.appliances.repository.specification.SearchUtils;
 import com.epam.rd.autocode.assessment.appliances.service.ManufacturerService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -29,8 +30,8 @@ public class ManufacturerServiceImpl implements ManufacturerService {
     @Override
     @Transactional(readOnly = true)
     @PreAuthorize("isAuthenticated()")
-    public Page<ManufacturerDto> findAll(Pageable pageable) {
-        return repository.findAll(pageable).map(this::toDto);
+    public Page<ManufacturerDto> search(String search, Pageable pageable) {
+        return repository.search(SearchUtils.likePattern(search), pageable).map(this::toDto);
     }
 
     @Override

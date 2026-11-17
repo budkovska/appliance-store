@@ -7,7 +7,7 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 public interface EmployeeService {
-    Page<EmployeeDto> findAll(Pageable pageable);
+    Page<EmployeeDto> search(String search, Pageable pageable);
     List<EmployeeDto> findAll();
     EmployeeDto findById(Long id);
     EmployeeDto save(EmployeeDto dto);

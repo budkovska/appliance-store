@@ -1,6 +1,7 @@
 package com.epam.rd.autocode.assessment.appliances.controller;
 
 import com.epam.rd.autocode.assessment.appliances.dto.EmployeeDto;
+import com.epam.rd.autocode.assessment.appliances.dto.ListQuery;
 import com.epam.rd.autocode.assessment.appliances.exception.DuplicateEmailException;
 import com.epam.rd.autocode.assessment.appliances.exception.ResourceInUseException;
 import com.epam.rd.autocode.assessment.appliances.exception.SelfDeletionException;
@@ -16,6 +17,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @Controller
 @RequestMapping("/employees")
 @RequiredArgsConstructor
@@ -23,9 +26,16 @@ public class EmployeeController {
 
     private final EmployeeService service;
 
+    private static final Map<String, String> SORTABLE = Map.of(
+            "id", "id",
+            "name", "name",
+            "email", "email",
+            "department", "department");
+
     @GetMapping
-    public String list(@PageableDefault(size = 10, sort = "id") Pageable pageable, Model model) {
-        Page<EmployeeDto> page = service.findAll(pageable);
+    public String list(@ModelAttribute("q") ListQuery q, Model model) {
+        Pageable pageable = q.resolve(SORTABLE, "id");
+        Page<EmployeeDto> page = service.search(q.getSearch(), pageable);
         model.addAttribute("employees", page.getContent());
         model.addAttribute("page", page);
         return "employee/employees";

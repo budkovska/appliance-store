@@ -6,9 +6,12 @@ import com.epam.rd.autocode.assessment.appliances.exception.ResourceInUseExcepti
 import com.epam.rd.autocode.assessment.appliances.exception.ResourceNotFoundException;
 import com.epam.rd.autocode.assessment.appliances.mapper.ApplianceMapper;
 import com.epam.rd.autocode.assessment.appliances.model.Appliance;
+import com.epam.rd.autocode.assessment.appliances.model.Category;
 import com.epam.rd.autocode.assessment.appliances.model.Manufacturer;
+import com.epam.rd.autocode.assessment.appliances.model.PowerType;
 import com.epam.rd.autocode.assessment.appliances.repository.ApplianceRepository;
 import com.epam.rd.autocode.assessment.appliances.repository.ManufacturerRepository;
+import com.epam.rd.autocode.assessment.appliances.repository.specification.ApplianceSpecifications;
 import com.epam.rd.autocode.assessment.appliances.service.ApplianceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -32,8 +35,11 @@ public class ApplianceServiceImpl implements ApplianceService {
     @Override
     @Transactional(readOnly = true)
     @PreAuthorize("isAuthenticated()")
-    public Page<ApplianceDto> findAll(Pageable pageable) {
-        return repository.findAll(pageable).map(mapper::toDto);
+    public Page<ApplianceDto> search(String search, Category category, PowerType powerType,
+                                     Long manufacturerId, Pageable pageable) {
+        return repository.findAll(
+                        ApplianceSpecifications.filter(search, category, powerType, manufacturerId), pageable)
+                .map(mapper::toDto);
     }
 
     @Override

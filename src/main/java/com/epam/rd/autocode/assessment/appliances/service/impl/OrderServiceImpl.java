@@ -14,6 +14,7 @@ import com.epam.rd.autocode.assessment.appliances.repository.ApplianceRepository
 import com.epam.rd.autocode.assessment.appliances.repository.ClientRepository;
 import com.epam.rd.autocode.assessment.appliances.repository.EmployeeRepository;
 import com.epam.rd.autocode.assessment.appliances.repository.OrdersRepository;
+import com.epam.rd.autocode.assessment.appliances.repository.specification.OrderSpecifications;
 import com.epam.rd.autocode.assessment.appliances.security.CurrentUser;
 import com.epam.rd.autocode.assessment.appliances.service.OrderService;
 import lombok.RequiredArgsConstructor;
@@ -43,11 +44,11 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     @PreAuthorize("isAuthenticated()")
-    public Page<OrderDto> findAllForCurrentUser(Pageable pageable) {
-        Page<Orders> page = CurrentUser.isEmployee()
-                ? ordersRepository.findAll(pageable)
-                : ordersRepository.findByClientEmail(CurrentUser.email(), pageable);
-        return page.map(orderMapper::toDto);
+    public Page<OrderDto> findAllForCurrentUser(String search, Boolean approved, Pageable pageable) {
+        String clientEmail = CurrentUser.isEmployee() ? null : CurrentUser.email();
+        return ordersRepository
+                .findAll(OrderSpecifications.filter(clientEmail, search, approved), pageable)
+                .map(orderMapper::toDto);
     }
 
     @Override

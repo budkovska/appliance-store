@@ -14,19 +14,40 @@
 <header>
     <div th:insert="~{menunavy::navy}"></div>
 </header>
-<main>
-    <h1 th:text="#{orders.header.list}">Orders list</h1>
+<main class="container-fluid pb-5">
+    <h1 class="my-3" th:text="#{orders.header.list}">Orders list</h1>
 
     <div class="alert alert-danger" th:if="${param.lockedError}" th:text="#{error.order.locked}"></div>
+
+    <form class="row g-2 mb-3" method="get" th:action="@{/orders}">
+        <div class="col-sm-6 col-md-5">
+            <input type="search" class="form-control" name="search" maxlength="100"
+                   th:value="${q.search}" th:placeholder="#{search.placeholder.orders}">
+        </div>
+        <div class="col-sm-6 col-md-3">
+            <select class="form-select" name="status" onchange="this.form.submit()">
+                <option value="" th:text="#{object.order.approved} + ': ' + #{filter.all}"></option>
+                <option value="approved" th:selected="${q.status == 'approved'}" th:text="#{filter.status.approved}"></option>
+                <option value="pending" th:selected="${q.status == 'pending'}" th:text="#{filter.status.pending}"></option>
+            </select>
+        </div>
+        <input type="hidden" name="size" th:value="${q.size}">
+        <input type="hidden" name="sort" th:value="${q.sort}">
+        <input type="hidden" name="dir" th:value="${q.dir}">
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary" th:text="#{search.btn}">Search</button>
+            <a class="btn btn-outline-secondary" th:href="@{/orders}" th:text="#{search.reset}">Reset</a>
+        </div>
+    </form>
 
     <div class="table-responsive">
         <table class="table table-hover align-middle">
             <thead>
             <tr class="table-dark">
-                <th th:text="#{object.order.id}">ID</th>
-                <th th:text="#{object.order.client}">Client</th>
-                <th th:text="#{object.order.employee}">Employee</th>
-                <th th:text="#{object.order.approved}">Approved</th>
+                <th th:replace="~{fragments/list :: sortHeader(#{object.order.id}, 'id', '/orders')}"></th>
+                <th th:replace="~{fragments/list :: sortHeader(#{object.order.client}, 'client', '/orders')}"></th>
+                <th th:replace="~{fragments/list :: sortHeader(#{object.order.employee}, 'employee', '/orders')}"></th>
+                <th th:replace="~{fragments/list :: sortHeader(#{object.order.approved}, 'approved', '/orders')}"></th>
                 <th th:text="#{object.order.amount}">Amount</th>
                 <th th:text="#{operation}">Operation</th>
             </tr>
@@ -72,10 +93,16 @@
                     </form>
                 </td>
             </tr>
+            <tr th:if="${#lists.isEmpty(orders)}">
+                <td colspan="6" class="text-center text-muted py-4" th:text="#{pagination.empty}"></td>
+            </tr>
             </tbody>
         </table>
     </div>
-    <a th:href="@{/orders/add}" class="btn btn-primary" th:text="#{orders.btn.new}"></a>
+
+    <div th:replace="~{fragments/list :: pagination('/orders')}"></div>
+
+    <a th:href="@{/orders/add}" class="btn btn-primary mt-3" th:text="#{orders.btn.new}"></a>
 </main>
 <div th:insert="~{footer::footer}"></div>
 </body>

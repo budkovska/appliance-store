@@ -3,61 +3,105 @@
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <title>Appliances</title>
 </head>
 <body>
 <header>
     <div th:insert="~{menunavy::navy}"></div>
 </header>
-<main>
-    <h1 th:text="#{appliance.header.list}">Appliances list</h1>
+<main class="container-fluid pb-5">
+    <h1 class="my-3" th:text="#{appliance.header.list}">Appliances list</h1>
 
     <div class="alert alert-danger" th:if="${param.deleteError}" th:text="#{error.in.use}"></div>
 
-    <table class="table table-hover">
-        <thead>
-        <tr class="table-dark">
-            <th th:text="#{object.appliance.id}"></th>
-            <th th:text="#{object.appliance.name}"></th>
-            <th th:text="#{object.appliance.category}"></th>
-            <th th:text="#{object.appliance.model}"></th>
-            <th th:text="#{object.appliance.manufacturer}"></th>
-            <th th:text="#{object.appliance.powerType}"></th>
-            <th th:text="#{object.appliance.characteristic}"></th>
-            <th th:text="#{object.appliance.description}"></th>
-            <th th:text="#{object.appliance.power}"></th>
-            <th th:text="#{object.appliance.price}"></th>
-            <th sec:authorize="hasRole('EMPLOYEE')" th:text="#{operation}"></th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="appliance: ${appliances}">
-            <td><span class="float-end" th:text="${appliance.id}"></span></td>
-            <td th:text="${appliance.name}"></td>
-            <td><span class="float-end" th:text="${appliance.category}"></span></td>
-            <td th:text="${appliance.model}"></td>
-            <td><span class="float-end" th:text="${appliance.manufacturerName}"></span></td>
-            <td th:text="${appliance.powerType}"></td>
-            <td th:text="${appliance.characteristic}"></td>
-            <td th:text="${appliance.description}"></td>
-            <td><span class="float-end" th:text="${appliance.power}"></span></td>
-            <td><span class="float-end" th:text="${appliance.price}"></span></td>
-            <td sec:authorize="hasRole('EMPLOYEE')">
-                <a class="btn btn-sm btn-outline-primary"
-                   th:href="@{/appliances/{id}/edit(id=${appliance.id})}" th:text="#{btn.edit}"></a>
-                <form class="d-inline" method="post"
-                      th:action="@{/appliances/{id}/delete(id=${appliance.id})}">
-                    <button class="btn btn-sm btn-outline-danger" th:text="#{btn.delete}"></button>
-                </form>
-            </td>
-        </tr>
-        </tbody>
-    </table>
+    <form class="row g-2 mb-3" method="get" th:action="@{/appliances}">
+        <div class="col-md-4">
+            <input type="search" class="form-control" name="search" maxlength="100"
+                   th:value="${q.search}" th:placeholder="#{search.placeholder.appliances}">
+        </div>
+        <div class="col-6 col-md-2">
+            <select class="form-select" name="category" onchange="this.form.submit()">
+                <option value="" th:text="#{object.appliance.category} + ': ' + #{filter.all}"></option>
+                <option th:each="c : ${categories}" th:value="${c}" th:text="${c}"
+                        th:selected="${c == q.category}"></option>
+            </select>
+        </div>
+        <div class="col-6 col-md-2">
+            <select class="form-select" name="powerType" onchange="this.form.submit()">
+                <option value="" th:text="#{object.appliance.powerType} + ': ' + #{filter.all}"></option>
+                <option th:each="p : ${powerTypes}" th:value="${p}" th:text="${p}"
+                        th:selected="${p == q.powerType}"></option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select class="form-select" name="manufacturerId" onchange="this.form.submit()">
+                <option value="" th:text="#{object.appliance.manufacturer} + ': ' + #{filter.all}"></option>
+                <option th:each="m : ${manufacturers}" th:value="${m.id}" th:text="${m.name}"
+                        th:selected="${m.id == q.manufacturerId}"></option>
+            </select>
+        </div>
+        <input type="hidden" name="size" th:value="${q.size}">
+        <input type="hidden" name="sort" th:value="${q.sort}">
+        <input type="hidden" name="dir" th:value="${q.dir}">
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary" th:text="#{search.btn}">Search</button>
+            <a class="btn btn-outline-secondary" th:href="@{/appliances}" th:text="#{search.reset}">Reset</a>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+            <tr class="table-dark">
+                <th th:replace="~{fragments/list :: sortHeader(#{object.appliance.id}, 'id', '/appliances')}"></th>
+                <th th:replace="~{fragments/list :: sortHeader(#{object.appliance.name}, 'name', '/appliances')}"></th>
+                <th th:replace="~{fragments/list :: sortHeader(#{object.appliance.category}, 'category', '/appliances')}"></th>
+                <th th:replace="~{fragments/list :: sortHeader(#{object.appliance.model}, 'model', '/appliances')}"></th>
+                <th th:replace="~{fragments/list :: sortHeader(#{object.appliance.manufacturer}, 'manufacturer', '/appliances')}"></th>
+                <th th:replace="~{fragments/list :: sortHeader(#{object.appliance.powerType}, 'powerType', '/appliances')}"></th>
+                <th th:text="#{object.appliance.characteristic}"></th>
+                <th th:text="#{object.appliance.description}"></th>
+                <th th:replace="~{fragments/list :: sortHeader(#{object.appliance.power}, 'power', '/appliances')}"></th>
+                <th th:replace="~{fragments/list :: sortHeader(#{object.appliance.price}, 'price', '/appliances')}"></th>
+                <th sec:authorize="hasRole('EMPLOYEE')" th:text="#{operation}"></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="appliance : ${appliances}">
+                <td th:text="${appliance.id}"></td>
+                <td th:text="${appliance.name}"></td>
+                <td th:text="${appliance.category}"></td>
+                <td th:text="${appliance.model}"></td>
+                <td th:text="${appliance.manufacturerName}"></td>
+                <td th:text="${appliance.powerType}"></td>
+                <td th:text="${appliance.characteristic}"></td>
+                <td th:text="${appliance.description}"></td>
+                <td th:text="${appliance.power}"></td>
+                <td th:text="${appliance.price}"></td>
+                <td sec:authorize="hasRole('EMPLOYEE')">
+                    <a class="btn btn-sm btn-outline-primary"
+                       th:href="@{/appliances/{id}/edit(id=${appliance.id})}" th:text="#{btn.edit}"></a>
+                    <form class="d-inline" method="post"
+                          th:action="@{/appliances/{id}/delete(id=${appliance.id})}">
+                        <button class="btn btn-sm btn-outline-danger" th:text="#{btn.delete}"></button>
+                    </form>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(appliances)}">
+                <td colspan="11" class="text-center text-muted py-4" th:text="#{pagination.empty}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div th:replace="~{fragments/list :: pagination('/appliances')}"></div>
 
     <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/appliances/add}"
-       class="btn btn-primary" th:text="#{appliance.btn.new}">New appliance</a>
+       class="btn btn-primary mt-3" th:text="#{appliance.btn.new}">New appliance</a>
 </main>
 <div th:insert="~{footer::footer}"></div>
 </body>

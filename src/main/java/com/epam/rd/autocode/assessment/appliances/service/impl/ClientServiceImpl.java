@@ -7,6 +7,7 @@ import com.epam.rd.autocode.assessment.appliances.exception.ResourceInUseExcepti
 import com.epam.rd.autocode.assessment.appliances.exception.ResourceNotFoundException;
 import com.epam.rd.autocode.assessment.appliances.model.Client;
 import com.epam.rd.autocode.assessment.appliances.repository.ClientRepository;
+import com.epam.rd.autocode.assessment.appliances.repository.specification.SearchUtils;
 import com.epam.rd.autocode.assessment.appliances.service.ClientService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -33,8 +34,8 @@ public class ClientServiceImpl implements ClientService {
     @Override
     @Transactional(readOnly = true)
     @PreAuthorize("hasRole('EMPLOYEE')")
-    public Page<ClientDto> findAll(Pageable pageable) {
-        return repository.findAll(pageable).map(this::toDto);
+    public Page<ClientDto> search(String search, Pageable pageable) {
+        return repository.search(SearchUtils.likePattern(search), pageable).map(this::toDto);
     }
 
     @Override
